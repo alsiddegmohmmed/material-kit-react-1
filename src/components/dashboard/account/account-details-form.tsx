@@ -36,7 +36,7 @@ export function AccountDetailsForm({ userId }: AccountDetailsFormProps): React.J
     const { name, value } = event.target as HTMLInputElement;
     setFormData({
       ...formData,
-      [name]: value,
+      [name]: value as string,
     });
   };
 

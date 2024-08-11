@@ -10,7 +10,7 @@ import Divider from '@mui/material/Divider';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import OutlinedInput from '@mui/material/OutlinedInput';
-import Select from '@mui/material/Select';
+import Select, { SelectChangeEvent } from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import Stack from '@mui/material/Stack';
 import Alert from '@mui/material/Alert';
@@ -32,15 +32,36 @@ export function UsersForm(): React.JSX.Element {
   const [alert, setAlert] = React.useState<string | null>(null);
   const router = useRouter();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | { name?: string | undefined; value: unknown; }>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement
+    >
+  ) => {
     const { name, value } = e.target;
-    setFormValues({ ...formValues, [name]: value });
+    setFormValues((prevState) => ({
+      ...prevState,
+      [name]: value,
+    }));
+  };
+
+  const handleSelectChange = (e: SelectChangeEvent<string>) => {
+    const { name, value } = e.target;
+    setFormValues((prevState) => ({
+      ...prevState,
+      [name]: value,
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     try {
-      const { error } = await authClient.signUp(formValues);
+        const { error } = await authClient.signUp({
+          firstName: formValues.firstName,
+          lastName: formValues.lastName,
+          email: formValues.email,
+          password: formValues.password,
+          role: formValues.role as "user" | "admin"
+        });
       if (error) {
         setAlert(error);
       } else {
@@ -72,7 +93,7 @@ export function UsersForm(): React.JSX.Element {
                   label="First Name"
                   name="firstName"
                   value={formValues.firstName}
-                  onChange={handleChange}
+                  onChange={handleInputChange}
                 />
               </FormControl>
 
@@ -82,7 +103,7 @@ export function UsersForm(): React.JSX.Element {
                   label="Last Name"
                   name="lastName"
                   value={formValues.lastName}
-                  onChange={handleChange}
+                  onChange={handleInputChange}
                 />
               </FormControl>
 
@@ -92,7 +113,7 @@ export function UsersForm(): React.JSX.Element {
                   label="Email"
                   name="email"
                   value={formValues.email}
-                  onChange={handleChange}
+                  onChange={handleInputChange}
                 />
               </FormControl>
 
@@ -102,7 +123,7 @@ export function UsersForm(): React.JSX.Element {
                   label="Password"
                   name="password"
                   value={formValues.password}
-                  onChange={handleChange}
+                  onChange={handleInputChange}
                 />
               </FormControl>
 
@@ -112,7 +133,7 @@ export function UsersForm(): React.JSX.Element {
                   label="Role"
                   name="role"
                   value={formValues.role}
-                  onChange={handleChange}
+                  onChange={handleSelectChange}
                 >
                   <MenuItem value="admin">Admin</MenuItem>
                   <MenuItem value="user">User</MenuItem>

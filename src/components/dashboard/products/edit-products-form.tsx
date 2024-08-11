@@ -27,7 +27,14 @@ export default function EditProductForm() {
       if (productId) {
         const productDoc = await getDoc(doc(db, 'products', productId));
         if (productDoc.exists()) {
-          setProductData(productDoc.data());
+          setProductData({
+            productName: productDoc.data().productName,
+            company: productDoc.data().company,
+            location: productDoc.data().location,
+            price: productDoc.data().price,
+            quantity: productDoc.data().quantity,
+            imageUrl: productDoc.data().imageUrl,
+          });
         }
       }
     };
@@ -35,7 +42,7 @@ export default function EditProductForm() {
     fetchProduct();
   }, [productId]);
 
-  const handleInputChange = (event) => {
+  const handleInputChange = (event: { target: { name: any; value: any; }; }) => {
     const { name, value } = event.target;
     setProductData((prevData) => ({
       ...prevData,
@@ -43,7 +50,7 @@ export default function EditProductForm() {
     }));
   };
 
-  const handleSubmit = async (event) => {
+  const handleSubmit = async (event: { preventDefault: () => void; }) => {
     event.preventDefault();
     if (productId) {
       const productRef = doc(db, 'products', productId);

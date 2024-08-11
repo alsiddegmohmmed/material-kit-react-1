@@ -23,7 +23,7 @@
     "@fontsource/inter": "5.0.18",
     "@fontsource/plus-jakarta-sans": "5.0.20",
     "@fontsource/roboto-mono": "5.0.18",
-    "@hookform/resolvers": "3.6.0",
+    "@hookform/resolvers": "^3.6.0",
     "@mui/icons-material": "^5.16.5",
     "@mui/lab": "5.0.0-alpha.170",
     "@mui/material": "^5.15.20",
@@ -39,6 +39,7 @@
     "react-apexcharts": "1.4.1",
     "react-dom": "18.3.1",
     "react-hook-form": "7.52.0",
+    "yup": "^1.4.0",
     "zod": "3.23.8"
   },
   "devDependencies": {

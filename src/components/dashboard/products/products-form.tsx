@@ -1,4 +1,4 @@
-'use client'
+'use client';
 import * as React from 'react';
 import Button from '@mui/material/Button';
 import RouterLink from 'next/link';
@@ -52,39 +52,58 @@ export function ProductForm(): React.JSX.Element {
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
-    if (imageFile) {
-      const storageRef = ref(storage, `products/${imageFile.name}`);
-      const uploadTask = uploadBytesResumable(storageRef, imageFile);
 
-      uploadTask.on('state_changed',
-        () => {
-          // Progress function ...
-        },
-        (error) => {
-          console.error("Error uploading image: ", error);
-          setAlert("Error uploading image!");
-        },
-        async () => {
-          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-          setFormValues({ ...formValues, imageUrl: downloadURL });
-
-          try {
-            const docRef = await addDoc(collection(db, "products"), {
-              ...formValues,
-              imageUrl: downloadURL, // Save the image URL
-              createdAt: serverTimestamp() // Add createdAt field with server timestamp
-            });
-            console.log("Document written with ID: ", docRef.id);
-            setAlert("Product added successfully!");
-          } catch (e) {
-            console.error("Error adding document: ", e);
-            setAlert("Error adding product!");
-          }
-        }
-      );
-    } else {
-      setAlert("Please upload an image.");
+    // Validation checks
+    if (!formValues.productName.trim()) {
+      setAlert("Product name is required!");
+      return;
     }
+    if (!formValues.price || parseFloat(formValues.price) <= 0 || parseFloat(formValues.price) > 2000) {
+      setAlert("Price must be between 1 and 2000!");
+      return;
+    }
+    if (!formValues.quantity || parseFloat(formValues.quantity) <= 0 || parseFloat(formValues.quantity) > 2000) {
+      setAlert("Quantity must be between 1 and 2000!");
+      return;
+    }
+    if (!imageFile) {
+      setAlert("Please upload an image.");
+      return;
+    }
+    if (!imageFile.type.startsWith('image/')) {
+      setAlert("Only image files are allowed!");
+      return;
+    }
+
+    const storageRef = ref(storage, `products/${imageFile.name}`);
+    const uploadTask = uploadBytesResumable(storageRef, imageFile);
+
+    uploadTask.on('state_changed',
+      () => {
+        // Progress function ...
+      },
+      (error) => {
+        console.error("Error uploading image: ", error);
+        setAlert("Error uploading image!");
+      },
+      async () => {
+        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+        setFormValues({ ...formValues, imageUrl: downloadURL });
+
+        try {
+          const docRef = await addDoc(collection(db, "products"), {
+            ...formValues,
+            imageUrl: downloadURL, // Save the image URL
+            createdAt: serverTimestamp() // Add createdAt field with server timestamp
+          });
+          console.log("Document written with ID: ", docRef.id);
+          setAlert("Product added successfully!");
+        } catch (e) {
+          console.error("Error adding document: ", e);
+          setAlert("Error adding product!");
+        }
+      }
+    );
   };
 
   return (
@@ -108,6 +127,7 @@ export function ProductForm(): React.JSX.Element {
                   name="productName"
                   value={formValues.productName}
                   onChange={handleChange}
+                  required // Mark field as required
                 />
               </FormControl>
               <FormControl fullWidth>
@@ -118,6 +138,8 @@ export function ProductForm(): React.JSX.Element {
                   value={formValues.price}
                   onChange={handleChange}
                   type="number"
+                  inputProps={{ min: 1, max: 2000 }} // Set min and max
+                  required // Mark field as required
                 />
               </FormControl>
               <FormControl fullWidth>
@@ -128,6 +150,8 @@ export function ProductForm(): React.JSX.Element {
                   value={formValues.quantity}
                   onChange={handleChange}
                   type="number"
+                  inputProps={{ min: 1, max: 2000 }} // Set min and max
+                  required // Mark field as required
                 />
               </FormControl>
               <FormControl fullWidth>
@@ -168,6 +192,8 @@ export function ProductForm(): React.JSX.Element {
                 <OutlinedInput
                   type="file"
                   onChange={handleImageChange}
+                  inputProps={{ accept: 'image/*' }} // Allow only image files
+                  required // Mark field as required
                 />
               </FormControl>
             </Stack>

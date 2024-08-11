@@ -1,11 +1,23 @@
-// src/components/dashboard/account/account-details-form.tsx
-
 import * as React from 'react';
-import { Button, Card, CardActions, CardContent, CardHeader, Divider, FormControl, InputLabel, MenuItem, OutlinedInput, Select, Grid } from '@mui/material';
+import {
+  Button,
+  Card,
+  CardActions,
+  CardContent,
+  CardHeader,
+  Divider,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  OutlinedInput,
+  Select,
+  Grid,
+} from '@mui/material';
 import { updateDoc, doc } from 'firebase/firestore';
 import { useFetchUser } from '@/hooks/useFetchUser';
-import { db, auth } from '../../../../server/lib/firebase';
+import { db } from '../../../../server/lib/firebase';
 import { User } from '@/types/user';
+import { SelectChangeEvent } from '@mui/material/Select';
 
 const states = [
   { value: 'alabama', label: 'Alabama' },
@@ -19,11 +31,7 @@ interface AccountDetailsFormProps {
 }
 
 export function AccountDetailsForm({ userId }: AccountDetailsFormProps): React.JSX.Element {
-  // Add logging to see what userId is being passed
-  console.log('AccountDetailsForm userId:', userId);
-
   const { user, loading, error } = useFetchUser(userId);
-
   const [formData, setFormData] = React.useState<User | null>(null);
 
   React.useEffect(() => {
@@ -32,17 +40,18 @@ export function AccountDetailsForm({ userId }: AccountDetailsFormProps): React.J
     }
   }, [user]);
 
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>) => {
-    const { name, value } = event.target as HTMLInputElement;
-    setFormData({
-      ...formData,
-      [name]: value as string,
-    });
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = event.target;
+    setFormData((prevState) => (prevState ? { ...prevState, [name]: value } : null));
+  };
+
+  const handleSelectChange = (event: SelectChangeEvent<string>) => {
+    const { name, value } = event.target;
+    setFormData((prevState) => (prevState ? { ...prevState, [name as keyof User]: value } : null));
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-
     if (!formData) return;
 
     try {
@@ -79,7 +88,7 @@ export function AccountDetailsForm({ userId }: AccountDetailsFormProps): React.J
                 <InputLabel>First name</InputLabel>
                 <OutlinedInput
                   value={formData.firstName || ''}
-                  onChange={handleChange}
+                  onChange={handleInputChange}
                   label="First name"
                   name="firstName"
                 />
@@ -90,7 +99,7 @@ export function AccountDetailsForm({ userId }: AccountDetailsFormProps): React.J
                 <InputLabel>Last name</InputLabel>
                 <OutlinedInput
                   value={formData.lastName || ''}
-                  onChange={handleChange}
+                  onChange={handleInputChange}
                   label="Last name"
                   name="lastName"
                 />
@@ -101,7 +110,7 @@ export function AccountDetailsForm({ userId }: AccountDetailsFormProps): React.J
                 <InputLabel>Email address</InputLabel>
                 <OutlinedInput
                   value={formData.email || ''}
-                  onChange={handleChange}
+                  onChange={handleInputChange}
                   label="Email address"
                   name="email"
                 />
@@ -112,7 +121,7 @@ export function AccountDetailsForm({ userId }: AccountDetailsFormProps): React.J
                 <InputLabel>Phone number</InputLabel>
                 <OutlinedInput
                   value={formData.phone || ''}
-                  onChange={handleChange}
+                  onChange={handleInputChange}
                   label="Phone number"
                   name="phone"
                   type="tel"
@@ -124,7 +133,7 @@ export function AccountDetailsForm({ userId }: AccountDetailsFormProps): React.J
                 <InputLabel>State</InputLabel>
                 <Select
                   value={formData.state || ''}
-                  onChange={handleChange}
+                  onChange={handleSelectChange}
                   label="State"
                   name="state"
                   variant="outlined"
@@ -142,7 +151,7 @@ export function AccountDetailsForm({ userId }: AccountDetailsFormProps): React.J
                 <InputLabel>City</InputLabel>
                 <OutlinedInput
                   value={formData.city || ''}
-                  onChange={handleChange}
+                  onChange={handleInputChange}
                   label="City"
                   name="city"
                 />
@@ -152,7 +161,9 @@ export function AccountDetailsForm({ userId }: AccountDetailsFormProps): React.J
         </CardContent>
         <Divider />
         <CardActions sx={{ justifyContent: 'flex-end' }}>
-          <Button type="submit" variant="contained">Save details</Button>
+          <Button type="submit" variant="contained">
+            Save details
+          </Button>
         </CardActions>
       </Card>
     </form>

@@ -1,6 +1,4 @@
-// src/components/AccountDetailsForm.tsx
-
-'use client';
+// src/components/dashboard/account/account-details-form.tsx
 
 import * as React from 'react';
 import { Button, Card, CardActions, CardContent, CardHeader, Divider, FormControl, InputLabel, MenuItem, OutlinedInput, Select, Grid } from '@mui/material';
@@ -21,7 +19,10 @@ interface AccountDetailsFormProps {
 }
 
 export function AccountDetailsForm({ userId }: AccountDetailsFormProps): React.JSX.Element {
-  const { user, loading } = useFetchUser(userId);
+  // Add logging to see what userId is being passed
+  console.log('AccountDetailsForm userId:', userId);
+
+  const { user, loading, error } = useFetchUser(userId);
 
   const [formData, setFormData] = React.useState<User | null>(null);
 
@@ -44,15 +45,6 @@ export function AccountDetailsForm({ userId }: AccountDetailsFormProps): React.J
 
     if (!formData) return;
 
-    const user = auth.currentUser;
-    if (!user) {
-      console.error('User not authenticated');
-      alert('User not authenticated');
-      return;
-    }
-
-    const userId = user.uid;
-
     try {
       const userDoc = doc(db, 'users', userId);
       await updateDoc(userDoc, formData);
@@ -67,6 +59,10 @@ export function AccountDetailsForm({ userId }: AccountDetailsFormProps): React.J
     return <p>Loading...</p>;
   }
 
+  if (error) {
+    return <p>Error: {error}</p>;
+  }
+
   if (!formData) {
     return <p>User data not available</p>;
   }
@@ -77,8 +73,8 @@ export function AccountDetailsForm({ userId }: AccountDetailsFormProps): React.J
         <CardHeader subheader="The information can be edited" title="Profile" />
         <Divider />
         <CardContent>
-          <Grid container spacing={3}>
-            <Grid md={6} xs={12}>
+          <Grid container spacing={4}>
+            <Grid item md={6} xs={12}>
               <FormControl fullWidth required>
                 <InputLabel>First name</InputLabel>
                 <OutlinedInput
@@ -89,7 +85,7 @@ export function AccountDetailsForm({ userId }: AccountDetailsFormProps): React.J
                 />
               </FormControl>
             </Grid>
-            <Grid md={6} xs={12}>
+            <Grid item md={6} xs={12}>
               <FormControl fullWidth required>
                 <InputLabel>Last name</InputLabel>
                 <OutlinedInput
@@ -100,7 +96,7 @@ export function AccountDetailsForm({ userId }: AccountDetailsFormProps): React.J
                 />
               </FormControl>
             </Grid>
-            <Grid md={6} xs={12}>
+            <Grid item md={6} xs={12}>
               <FormControl fullWidth required>
                 <InputLabel>Email address</InputLabel>
                 <OutlinedInput
@@ -111,7 +107,7 @@ export function AccountDetailsForm({ userId }: AccountDetailsFormProps): React.J
                 />
               </FormControl>
             </Grid>
-            <Grid md={6} xs={12}>
+            <Grid item md={6} xs={12}>
               <FormControl fullWidth>
                 <InputLabel>Phone number</InputLabel>
                 <OutlinedInput
@@ -123,7 +119,7 @@ export function AccountDetailsForm({ userId }: AccountDetailsFormProps): React.J
                 />
               </FormControl>
             </Grid>
-            <Grid md={6} xs={12}>
+            <Grid item md={6} xs={12}>
               <FormControl fullWidth>
                 <InputLabel>State</InputLabel>
                 <Select
@@ -141,7 +137,7 @@ export function AccountDetailsForm({ userId }: AccountDetailsFormProps): React.J
                 </Select>
               </FormControl>
             </Grid>
-            <Grid md={6} xs={12}>
+            <Grid item md={6} xs={12}>
               <FormControl fullWidth>
                 <InputLabel>City</InputLabel>
                 <OutlinedInput

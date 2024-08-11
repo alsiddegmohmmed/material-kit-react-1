@@ -84,7 +84,7 @@ export default function Page(): React.JSX.Element {
       </Stack>
       <CustomersFilters
         searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
+        onSearch={setSearchTerm}
       />
       <CustomersTable
         count={filteredCustomers.length}

@@ -1,18 +1,14 @@
 // src/app/dashboard/account/page.tsx
 'use client'
 import * as React from 'react';
-import type { Metadata } from 'next';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { getAuth } from 'firebase/auth';
 import { getFirestore, doc, getDoc } from 'firebase/firestore';
 
-import { config } from '@/config';
 import { AccountDetailsForm } from '@/components/dashboard/account/account-details-form';
 import { AccountInfo } from '@/components/dashboard/account/account-info';
-
-
 
 const fetchUserData = async () => {
   const userId = getAuth().currentUser?.uid;
@@ -25,7 +21,7 @@ const fetchUserData = async () => {
     throw new Error('User does not exist in Firestore.');
   }
 
-  return userDoc.data();
+  return { id: userDoc.id, ...userDoc.data() };
 };
 
 export default function Page(): React.JSX.Element {
@@ -48,6 +44,10 @@ export default function Page(): React.JSX.Element {
     return <div>Loading...</div>;
   }
 
+  if (!user) {
+    return <div>Error loading user data</div>;
+  }
+
   return (
     <Stack spacing={3}>
       <div>
@@ -58,7 +58,7 @@ export default function Page(): React.JSX.Element {
           <AccountInfo user={user} />
         </Grid>
         <Grid lg={8} md={6} xs={12}>
-          <AccountDetailsForm user={user} />
+          <AccountDetailsForm userId={user.id} />
         </Grid>
       </Grid>
     </Stack>

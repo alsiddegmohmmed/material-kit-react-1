@@ -1,211 +1,133 @@
 'use client';
-import React, { useReducer, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import Link from 'next/link';
-import {
-  Box, Button, Card, CardActions, CardHeader, Divider, IconButton,
-  List, ListItem, ListItemAvatar, ListItemText, Dialog, DialogActions,
-  DialogContent, DialogTitle, Typography, TextField, TablePagination,
-  CircularProgress
-} from '@mui/material';
-import { ArrowRight, DotsThreeVertical } from '@phosphor-icons/react';
-import DeleteIcon from '@mui/icons-material/Delete';
+import RouterLink from 'next/link';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Card from '@mui/material/Card';
+import CardActions from '@mui/material/CardActions';
+import CardHeader from '@mui/material/CardHeader';
+import Divider from '@mui/material/Divider';
+import IconButton from '@mui/material/IconButton';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import ListItemAvatar from '@mui/material/ListItemAvatar';
+import ListItemText from '@mui/material/ListItemText';
+import { ArrowRight as ArrowRightIcon } from '@phosphor-icons/react/dist/ssr/ArrowRight';
+import { DotsThreeVertical as DotsThreeVerticalIcon } from '@phosphor-icons/react/dist/ssr/DotsThreeVertical';
 import dayjs from 'dayjs';
+import DeleteIcon from '@mui/icons-material/Delete';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
+import Typography from '@mui/material/Typography';
+import TextField from '@mui/material/TextField';
 import { collection, getDocs, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../../../server/lib/firebase';
+import { Link, TablePagination, CircularProgress } from '@mui/material';
 import { paths } from '@/paths';
 
-const initialState = {
-  products: [],
-  loading: true,
-  page: 0,
-  rowsPerPage: 5,
-  selectedProduct: null,
-  deleteProduct: null,
-  quantity: 1,
-};
-
-function productsReducer(state, action) {
-  switch (action.type) {
-    case 'SET_PRODUCTS':
-      return { ...state, products: action.payload };
-    case 'SET_LOADING':
-      return { ...state, loading: action.payload };
-    case 'SET_PAGE':
-      return { ...state, page: action.payload };
-    case 'SET_ROWS_PER_PAGE':
-      return { ...state, rowsPerPage: action.payload };
-    case 'SET_SELECTED_PRODUCT':
-      return { ...state, selectedProduct: action.payload, quantity: action.payload ? action.payload.quantity : 1 };
-    case 'SET_DELETE_PRODUCT':
-      return { ...state, deleteProduct: action.payload };
-    case 'SET_QUANTITY':
-      return { ...state, quantity: action.payload };
-    default:
-      return state;
-  }
+export interface Product {
+  id: string;
+  imageUrl: string;
+  productName: string;
+  company: string;
+  location: string;
+  price: string;
+  quantity: number;
+  updatedAt: Date;
 }
 
-const ProductListItem = React.memo(({ product, onUpdate, onDelete, onEdit }) => {
-  return (
-    <ListItem divider sx={{ display: 'flex', alignItems: 'center' }}>
-      <ListItemAvatar>
-        {product.imageUrl ? (
-          <Box
-            component="img"
-            src={product.imageUrl}
-            sx={{ borderRadius: 1, height: '48px', width: '48px' }}
-          />
-        ) : (
-          <Box
-            sx={{
-              borderRadius: 1,
-              backgroundColor: 'neutral.500',
-              height: '48px',
-              width: '48px',
-            }}
-          />
-        )}
-      </ListItemAvatar>
-      <ListItemText
-        primary={product.productName}
-        primaryTypographyProps={{ variant: 'subtitle1' }}
-        secondary={
-          <Box display="flex" flexDirection="column">
-            <Box display="flex" gap="20px" alignItems="center">
-              <Typography variant="body2" color="text.primary">
-                Company: {product.company}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Quantity: {product.quantity}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {product.location}
-              </Typography>
-            </Box>
-            <Box display="flex" gap="20px" alignItems="center">
-              <Typography variant="body2" color="text.secondary">
-                ${product.price}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Updated {dayjs(product.updatedAt).format('MMM D, YYYY')}
-              </Typography>
-            </Box>
-          </Box>
-        }
-      />
-      <Button variant="outlined" onClick={() => onUpdate(product)}>
-        Update stock
-      </Button>
-      <Link href={`/dashboard/products/edit?id=${product.id}`} passHref>
-        <IconButton edge="end" onClick={() => onEdit(product.id)}>
-          <DotsThreeVertical weight="bold" />
-        </IconButton>
-      </Link>
-      <IconButton edge="end" onClick={() => onDelete(product)}>
-        <DeleteIcon />
-      </IconButton>
-    </ListItem>
-  );
-});
+export interface LatestProductsProps {
+  sx?: SxProps;
+  searchTerm: string;
+  limit?: number;
+  paginate?: boolean;
+}
 
-const UpdateQuantityDialog = ({ product, open, onClose, onUpdate, quantity, setQuantity }) => {
-  return (
-    <Dialog open={open} onClose={onClose}>
-      <DialogTitle>Product Details</DialogTitle>
-      <DialogContent>
-        <TextField
-          margin="dense"
-          label="Quantity"
-          type="number"
-          fullWidth
-          value={quantity}
-          onChange={(e) => setQuantity(parseInt(e.target.value, 10))}
-        />
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={() => onUpdate(product.id, quantity)}>
-          Update
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
-};
-
-const DeleteConfirmationDialog = ({ product, open, onClose, onDelete }) => {
-  return (
-    <Dialog open={open} onClose={onClose}>
-      <DialogTitle>Delete Product</DialogTitle>
-      <DialogContent>
-        Are you sure you want to delete this product: {product?.productName}?
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={() => onDelete(product.id)}>
-          Delete
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
-};
-
-export function LatestProducts({ sx, searchTerm, limit, paginate = false }) {
-  const [state, dispatch] = useReducer(productsReducer, initialState);
-  const { products, loading, page, rowsPerPage, selectedProduct, deleteProduct, quantity } = state;
+export function LatestProducts({ sx, searchTerm, limit, paginate = false }: LatestProductsProps): React.JSX.Element {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const [open, setOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [quantity, setQuantity] = useState(1);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteProduct, setDeleteProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
 
   useEffect(() => {
-    const fetchProducts = async () => {
-      dispatch({ type: 'SET_LOADING', payload: true });
+    const fetchProducts = async (): Promise<void> => {
+      setLoading(true);
       const querySnapshot = await getDocs(collection(db, 'products'));
-      const productsData = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        quantity: doc.data().quantity || 1,
-        updatedAt: doc.data().createdAt ? doc.data().createdAt.toDate() : new Date(),
-      }));
-      dispatch({ type: 'SET_PRODUCTS', payload: productsData });
-      dispatch({ type: 'SET_LOADING', payload: false });
+      const productsData = querySnapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          quantity: data.quantity || 1,
+          updatedAt: data.createdAt ? data.createdAt.toDate() : new Date(),
+        };
+      }) as Product[];
+      setProducts(productsData);
+      setTotalProducts(productsData.length);
+      setLoading(false);
     };
 
-    fetchProducts();
+    void fetchProducts();
   }, []);
 
-  const filteredProducts = useMemo(() =>
-    products.filter(product =>
-      product.productName.toLowerCase().includes(searchTerm.toLowerCase())
-    ),
-    [products, searchTerm]
+  const filteredProducts = products.filter((product) =>
+    product.productName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const paginatedProducts = useMemo(() =>
-    filteredProducts.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage),
-    [filteredProducts, page, rowsPerPage]
-  );
+  const handleClickOpen = (product: Product): void => {
+    setSelectedProduct(product);
+    setQuantity(product.quantity);
+    setOpen(true);
+  };
 
-  const handleUpdateProduct = useCallback(async (productId, newQuantity) => {
+  const handleClose = (): void => {
+    setOpen(false);
+    setSelectedProduct(null);
+    setQuantity(1);
+  };
+
+  const handleQuantityChange = (amount: number): void => {
+    setQuantity((prevQuantity) => Math.max(1, prevQuantity + amount));
+  };
+
+  const deleteProductById = async (id: string): Promise<void> => {
+    await deleteDoc(doc(db, 'products', id));
+    setProducts(products.filter((product) => product.id !== id));
+  };
+
+  const updateProductQuantity = async (productId: string, newQuantity: number): Promise<void> => {
     const productRef = doc(db, 'products', productId);
     await updateDoc(productRef, { quantity: newQuantity });
-    dispatch({ type: 'SET_PRODUCTS', payload: products.map(p =>
-      p.id === productId ? { ...p, quantity: newQuantity } : p
-    )});
-    dispatch({ type: 'SET_SELECTED_PRODUCT', payload: null });
-  }, [products]);
-
-  const handleDeleteProduct = useCallback(async (productId) => {
-    await deleteDoc(doc(db, 'products', productId));
-    dispatch({ type: 'SET_PRODUCTS', payload: products.filter(p => p.id !== productId) });
-    dispatch({ type: 'SET_DELETE_PRODUCT', payload: null });
-  }, [products]);
-
-  const handlePageChange = (_, newPage) => {
-    dispatch({ type: 'SET_PAGE', payload: newPage });
+    setProducts((prevProducts) =>
+      prevProducts.map((product) =>
+        product.id === productId ? { ...product, quantity: newQuantity } : product
+      )
+    );
   };
 
-  const handleRowsPerPageChange = (event) => {
-    dispatch({ type: 'SET_ROWS_PER_PAGE', payload: parseInt(event.target.value, 10) });
-    dispatch({ type: 'SET_PAGE', payload: 0 });
+  const handlePageChange = (event: unknown, newPage: number): void => {
+    setPage(newPage);
   };
+
+  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const applyPagination = (rows: Product[], page: number, rowsPerPage: number): Product[] => {
+    return rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  };
+
+  const paginatedProducts = applyPagination(filteredProducts, page, rowsPerPage);
 
   return (
     <Card sx={sx}>
@@ -213,7 +135,7 @@ export function LatestProducts({ sx, searchTerm, limit, paginate = false }) {
         title="Latest products"
         action={
           <Typography variant="subtitle1" color="text.secondary">
-            {searchTerm ? `${filteredProducts.length} items found` : `${products.length} items`}
+            {searchTerm ? `${filteredProducts.length} items found` : `${totalProducts} items`}
           </Typography>
         }
       />
@@ -230,34 +152,101 @@ export function LatestProducts({ sx, searchTerm, limit, paginate = false }) {
                 <ListItemText primary="No items found" />
               </ListItem>
             ) : (
-              paginatedProducts.map((product) => (
-                <ProductListItem
+              paginatedProducts.map((product, index) => (
+                <ListItem
+                  divider={index < paginatedProducts.length - 1}
                   key={product.id}
-                  product={product}
-                  onUpdate={() => dispatch({ type: 'SET_SELECTED_PRODUCT', payload: product })}
-                  onDelete={() => dispatch({ type: 'SET_DELETE_PRODUCT', payload: product })}
-                  onEdit={() => {/* handle edit */}}
-                />
+                  sx={{ display: 'flex', alignItems: 'center' }}
+                >
+                  <ListItemAvatar>
+                    {product.imageUrl ? (
+                      <Box
+                        component="img"
+                        src={product.imageUrl}
+                        sx={{ borderRadius: 1, height: '48px', width: '48px' }}
+                      />
+                    ) : (
+                      <Box
+                        sx={{
+                          borderRadius: 1,
+                          backgroundColor: 'var(--mui-palette-neutral-500)',
+                          height: '48px',
+                          width: '48px',
+                        }}
+                      />
+                    )}
+                  </ListItemAvatar>
+                  <ListItemText
+                    primary={product.productName}
+                    primaryTypographyProps={{ variant: 'subtitle1' }}
+                    secondary={
+                      <Box display="flex" alignItems="center" justifyContent="space-between">
+                        <Box flexDirection="column">
+                          <Box mr={2} display="flex" gap="20px" alignItems="center">
+                            <Typography component="span" variant="body2" color="text.primary">
+                              Company: {product.company}
+                            </Typography>
+                            <Typography component="span" variant="body2" color="text.secondary">
+                              Quantity: {product.quantity}
+                            </Typography>
+                            <Typography component="span" variant="body2" color="text.secondary">
+                              {product.location}
+                            </Typography>
+                          </Box>
+                          <Box mr={2} display="flex" gap="20px" alignItems="center">
+                            <Typography component="span" variant="body2" color="text.secondary">
+                              ${product.price}
+                            </Typography>
+                            <Typography component="span" variant="body2" color="text.secondary">
+                              Updated {dayjs(product.updatedAt).format('MMM D, YYYY')}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </Box>
+                    }
+                  />
+                  <Button variant="outlined" onClick={() => { handleClickOpen(product); }}>
+                    Update stock
+                  </Button>
+                  <Link href={`/dashboard/products/edit?id=${product.id}`}>
+                    <IconButton edge="end">
+                      <DotsThreeVerticalIcon weight="bold" />
+                    </IconButton>
+                  </Link>
+                  <IconButton
+                    edge="end"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDeleteProduct(product);
+                      setDeleteOpen(true);
+                    }}
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                </ListItem>
               ))
             )}
           </List>
           {!paginate && (
             <>
-              <Divider />
-              <CardActions sx={{ justifyContent: 'flex-end' }}>
-                <Button
-                  color="inherit"
-                  endIcon={<ArrowRight fontSize="small" />}
-                  size="small"
-                  variant="text"
-                  component={Link}
-                  href={paths.dashboard.products}
-                >
-                  View all
-                </Button>
-              </CardActions>
-            </>
-          )}
+
+
+          <Divider />
+          <CardActions sx={{ justifyContent: 'flex-end' }}>
+            <Button
+              color="inherit"
+              endIcon={<ArrowRightIcon fontSize="var(--icon-fontSize-md)" />}
+              size="small"
+              variant="text"
+              component={RouterLink}
+              href={paths.dashboard.products}
+            >
+              View all
+            </Button>
+          </CardActions>
+          </>
+        )}
+        <Divider />
           {paginate && (
             <TablePagination
               component="div"
@@ -271,20 +260,55 @@ export function LatestProducts({ sx, searchTerm, limit, paginate = false }) {
           )}
         </>
       )}
-      <UpdateQuantityDialog
-        product={selectedProduct}
-        open={!!selectedProduct}
-        onClose={() => dispatch({ type: 'SET_SELECTED_PRODUCT', payload: null })}
-        onUpdate={handleUpdateProduct}
-        quantity={quantity}
-        setQuantity={(newQuantity) => dispatch({ type: 'SET_QUANTITY', payload: newQuantity })}
-      />
-      <DeleteConfirmationDialog
-        product={deleteProduct}
-        open={!!deleteProduct}
-        onClose={() => dispatch({ type: 'SET_DELETE_PRODUCT', payload: null })}
-        onDelete={handleDeleteProduct}
-      />
+      {selectedProduct ? (
+        <Dialog open={open} onClose={handleClose}>
+          <DialogTitle>Product Details</DialogTitle>
+          <DialogContent>
+            <TextField
+              margin="dense"
+              label="Quantity"
+              type="number"
+              fullWidth
+              value={quantity}
+              onChange={(e) => setQuantity(parseInt(e.target.value, 10))}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleClose}>Cancel</Button>
+            <Button
+              onClick={() => {
+                if (selectedProduct) {
+                  updateProductQuantity(selectedProduct.id, quantity);
+                }
+                handleClose();
+              }}
+            >
+              Update
+            </Button>
+          </DialogActions>
+        </Dialog>
+      ) : null}
+      {deleteProduct ? (
+        <Dialog open={deleteOpen} onClose={() => setDeleteOpen(false)}>
+          <DialogTitle>Delete Product</DialogTitle>
+          <DialogContent>
+            Are you sure you want to delete this product: {deleteProduct.productName}?
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setDeleteOpen(false)}>Cancel</Button>
+            <Button
+              onClick={() => {
+                if (deleteProduct) {
+                  deleteProductById(deleteProduct.id);
+                }
+                setDeleteOpen(false);
+              }}
+            >
+              Delete
+            </Button>
+          </DialogActions>
+        </Dialog>
+      ) : null}
     </Card>
   );
 }
@@ -295,3 +319,4 @@ LatestProducts.propTypes = {
   limit: PropTypes.number,
   paginate: PropTypes.bool,
 };
+

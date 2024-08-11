@@ -3,7 +3,7 @@
 'use client';
 
 import * as React from 'react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import RouterLink from 'next/link';
 import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
@@ -15,7 +15,7 @@ import type { Customer } from '@/components/dashboard/customer/customers-table';
 import { collection, getDocs, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../../../../server/lib/firebase';
 import { paths } from '@/paths';
-import Loading from '@/components/loading/loading'; // Import the Loading component
+import Loading from '@/components/loading/loading';// Import the Loading component
 
 export default function Page(): React.JSX.Element {
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -24,7 +24,7 @@ export default function Page(): React.JSX.Element {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true); // Add loading state
 
-  React.useEffect(() => {
+  useEffect(() => {
     const fetchCustomers = async (): Promise<void> => {
       setLoading(true); // Set loading to true before fetching
       try {
@@ -77,8 +77,8 @@ export default function Page(): React.JSX.Element {
           <Typography variant="h4">Users</Typography>
         </Stack>
         <div>
-          <Button startIcon={<PlusIcon fontSize="var(--mui-svg-icon-size, 1.5rem)" />} variant="contained" component={RouterLink} href={paths.dashboard.customers.new}>
-            Add
+        <Button startIcon={<PlusIcon fontSize="var(--icon-fontSize-md)" />} variant="contained" component={RouterLink} href={paths.dashboard.addusers}>
+            Add Users
           </Button>
         </div>
       </Stack>
@@ -87,13 +87,13 @@ export default function Page(): React.JSX.Element {
         setSearchTerm={setSearchTerm}
       />
       <CustomersTable
-        customers={paginatedCustomers}
-        customersCount={filteredCustomers.length}
+        count={filteredCustomers.length}
+        page={page}
+        rows={paginatedCustomers}
+        rowsPerPage={rowsPerPage}
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
-        page={page}
-        rowsPerPage={rowsPerPage}
-        onDeleteCustomer={deleteCustomerById}
+        onDelete={deleteCustomerById}
       />
     </Stack>
   );

@@ -1,4 +1,3 @@
-'use client';
 import * as React from 'react';
 import Button from '@mui/material/Button';
 import RouterLink from 'next/link';
@@ -10,20 +9,18 @@ import Divider from '@mui/material/Divider';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import OutlinedInput from '@mui/material/OutlinedInput';
-import Select from '@mui/material/Select';
+import Select, { SelectChangeEvent } from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import Stack from '@mui/material/Stack';
 import Alert from '@mui/material/Alert';
 import IconButton from '@mui/material/IconButton';
 import HomeIcon from '@mui/icons-material/Home';
 import { useRouter } from 'next/navigation';
-import { db, storage } from '../../../../server/lib/firebase'; // Ensure you import storage
+import { db, storage } from '../../../../server/lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import Link from '@mui/material/Link';
 import { paths } from '@/paths';
-
-
 
 export function ProductForm(): React.JSX.Element {
   const [formValues, setFormValues] = React.useState({
@@ -39,9 +36,11 @@ export function ProductForm(): React.JSX.Element {
   const [imageFile, setImageFile] = React.useState<File | null>(null); // State to hold the selected image file
   const router = useRouter();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | { name?: string | undefined; value: unknown; }>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent<string>
+  ) => {
     const { name, value } = e.target;
-    setFormValues({ ...formValues, [name]: value });
+    setFormValues({ ...formValues, [name as string]: value });
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
@@ -89,9 +88,9 @@ export function ProductForm(): React.JSX.Element {
 
   return (
     <div>
-      <IconButton  >
+      <IconButton>
         <Link component={RouterLink} href={paths.home} underline="none">
-        <HomeIcon />
+          <HomeIcon />
         </Link>
       </IconButton>
       {alert ? <Alert severity={alert.includes("successfully") ? "success" : "error"}>{alert}</Alert> : null}

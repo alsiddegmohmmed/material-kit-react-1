@@ -56,7 +56,7 @@ export function UserPopover({ anchorEl, onClose, open }: UserPopoverProps): Reac
       slotProps={{ paper: { sx: { width: '240px' } } }}
     >
       <Box sx={{ p: '16px 20px', display: 'flex', alignItems: 'center' }}>
-        <Avatar src={user?.avatar || '/assets/avatar.png'} sx={{ height: '40px', width: '40px', mr: 2 }} />
+    <Avatar src={String(user?.avatar ?? '/assets/avatar.png')} sx={{ height: '40px', width: '40px', mr: 2 }} />
         <Box>
           <Typography variant="subtitle1">{user?.firstName} {user?.lastName}</Typography>
           <Typography color="text.secondary" variant="body2">

@@ -21,6 +21,11 @@ export interface SignUpParams {
   role?: 'admin' | 'user';
 }
 
+interface SignInWithPasswordParams {
+  email: string;
+  password: string;
+}
+
 export interface ResetPasswordParams {
   email: string;
 }

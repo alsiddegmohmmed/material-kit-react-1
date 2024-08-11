@@ -25,7 +25,7 @@ import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
 import { collection, getDocs, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../../../server/lib/firebase';
-import { Link, TablePagination, CircularProgress } from '@mui/material';
+import { Link, TablePagination, CircularProgress, SxProps } from '@mui/material';
 import { paths } from '@/paths';
 
 export interface Product {

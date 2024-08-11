@@ -31,7 +31,7 @@ export const useFetchUser = (userId: string) => {
         }
       } catch (error) {
         console.error('Error fetching user:', error);
-        setError(error.message);
+        setError((error as Error).message);
       } finally {
         setLoading(false);
       }

@@ -10,6 +10,8 @@ import FormControl from '@mui/material/FormControl';
 import FormHelperText from '@mui/material/FormHelperText';
 import InputLabel from '@mui/material/InputLabel';
 import OutlinedInput from '@mui/material/OutlinedInput';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { Controller, useForm } from 'react-hook-form';
@@ -32,7 +34,6 @@ const defaultValues = { firstName: '', lastName: '', email: '', password: '', ro
 
 export function AdminCreateUserForm(): React.JSX.Element {
   const router = useRouter();
-
   const { checkSession } = useUser();
 
   const [isPending, setIsPending] = React.useState<boolean>(false);
@@ -119,10 +120,14 @@ export function AdminCreateUserForm(): React.JSX.Element {
             render={({ field }) => (
               <FormControl>
                 <InputLabel>Role</InputLabel>
-                <OutlinedInput {...field} label="Role" select>
-                  <option value="admin">Admin</option>
-                  <option value="user">User</option>
-                </OutlinedInput>
+                <Select
+                  {...field}
+                  label="Role"
+                  value={field.value || 'user'} // Add this line to handle initial value
+                >
+                  <MenuItem value="admin">Admin</MenuItem>
+                  <MenuItem value="user">User</MenuItem>
+                </Select>
               </FormControl>
             )}
           />
